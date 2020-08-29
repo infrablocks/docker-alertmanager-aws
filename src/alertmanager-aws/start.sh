@@ -3,29 +3,43 @@
 [ "$TRACE" = "yes" ] && set -x
 set -e
 
-ALERTMANAGER_CONFIG_FILE=\
+config_file=\
 "${ALERTMANAGER_CONFIG_FILE:-/opt/alertmanager/conf/alertmanager.yml}"
-ALERTMANAGER_STORAGE_PATH=\
+storage_path=\
 "${ALERTMANAGER_STORAGE_PATH:-/var/opt/alertmanager}"
 
-ALERTMANAGER_WEB_LISTEN_ADDRESS=\
+web_listen_address=\
 "${ALERTMANAGER_WEB_LISTEN_ADDRESS:-:9093}"
 
-ALERTMANAGER_CLUSTER_LISTEN_ADDRESS=\
+cluster_listen_address=\
 "${ALERTMANAGER_CLUSTER_LISTEN_ADDRESS:-0.0.0.0:9094}"
 
-ALERTMANAGER_LOG_LEVEL="${ALERTMANAGER_LOG_LEVEL:-info}"
-ALERTMANAGER_LOG_FORMAT="${ALERTMANAGER_LOG_FORMAT:-json}"
+cluster_advertise_address_option=
+if [ -n "${ALERTMANAGER_CLUSTER_ADVERTISE_ADDRESS}" ]; then
+  address="${ALERTMANAGER_CLUSTER_ADVERTISE_ADDRESS}"
+  cluster_advertise_address_option="--cluster.advertise-address=${address}"
+fi
+
+cluster_peer_options=()
+for cluster_peer in ${ALERTMANAGER_CLUSTER_PEERS//,/ }; do
+  cluster_peer_options+=("--cluster.peer=${cluster_peer}")
+done
+
+log_level="${ALERTMANAGER_LOG_LEVEL:-info}"
+log_format="${ALERTMANAGER_LOG_FORMAT:-json}"
 
 echo "Running alertmanager."
+# shellcheck disable=SC2086
 exec su-exec alertmgr:alertmgr /opt/alertmanager/bin/alertmanager \
-    --config.file="${ALERTMANAGER_CONFIG_FILE}" \
+    --config.file="${config_file}" \
     \
-    --storage.path="${ALERTMANAGER_STORAGE_PATH}" \
+    --storage.path="${storage_path}" \
     \
-    --web.listen-address="${ALERTMANAGER_WEB_LISTEN_ADDRESS}" \
+    --web.listen-address="${web_listen_address}" \
     \
-    --cluster.listen-address="${ALERTMANAGER_CLUSTER_LISTEN_ADDRESS}" \
+    --cluster.listen-address="${cluster_listen_address}" \
+    ${cluster_advertise_address_option} \
+    "${cluster_peer_options[@]}" \
     \
-    --log.level="${ALERTMANAGER_LOG_LEVEL}" \
-    --log.format="${ALERTMANAGER_LOG_FORMAT}"
+    --log.level="${log_level}" \
+    --log.format="${log_format}"

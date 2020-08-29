@@ -78,6 +78,16 @@ describe 'prometheus' do
           .to(match(/--cluster\.listen-address=0\.0\.0\.0:9094/))
     end
 
+    it 'has no cluster advertise address' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .not_to(match(/--cluster\.advertise-address/))
+    end
+
+    it 'has no cluster peers' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .not_to(match(/--cluster\.peer/))
+    end
+
     it 'runs with the alertmgr user' do
       expect(process('/opt/alertmanager/bin/alertmanager').user)
           .to(eq('alertmgr'))
@@ -86,6 +96,44 @@ describe 'prometheus' do
     it 'runs with the alertmgr group' do
       expect(process('/opt/alertmanager/bin/alertmanager').group)
           .to(eq('alertmgr'))
+    end
+  end
+
+  describe 'with cluster configuration' do
+    before(:all) do
+      create_env_file(
+          endpoint_url: s3_endpoint_url,
+          region: s3_bucket_region,
+          bucket_path: s3_bucket_path,
+          object_path: s3_env_file_object_path,
+          env: {
+              'ALERTMANAGER_CLUSTER_LISTEN_ADDRESS' => '0.0.0.0:9095',
+              'ALERTMANAGER_CLUSTER_ADVERTISE_ADDRESS' => '10.0.0.1:9095',
+              'ALERTMANAGER_CLUSTER_PEERS' =>
+                  'am1.example.com:9095,am2.example.com:9095'
+          })
+
+      execute_docker_entrypoint(
+          started_indicator: "Listening")
+    end
+
+    after(:all, &:reset_docker_backend)
+
+    it 'listens on the correct cluster address' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.listen-address=0\.0\.0\.0:9095/))
+    end
+
+    it 'uses the provided advertise address' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.advertise-address=10\.0\.0\.1:9095/))
+    end
+
+    it 'has cluster peers for each provided peer' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.peer=am1.example.com/))
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.peer=am2.example.com/))
     end
   end
 
