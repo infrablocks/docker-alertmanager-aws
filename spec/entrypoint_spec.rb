@@ -63,6 +63,21 @@ describe 'prometheus' do
           .to(match(/--log\.level=info/))
     end
 
+    it 'has no external URL' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .not_to(match(/--web\.external-address/))
+    end
+
+    it 'listens on port 9093 on all interfaces' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--web\.listen-address=:9093/))
+    end
+
+    it 'enables HA mode' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.listen-address=0\.0\.0\.0:9094/))
+    end
+
     it 'runs with the alertmgr user' do
       expect(process('/opt/alertmanager/bin/alertmanager').user)
           .to(eq('alertmgr'))
