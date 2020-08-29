@@ -30,6 +30,50 @@ describe 'prometheus' do
     set :docker_container_create_options, extra
   end
 
+  describe 'by default' do
+    before(:all) do
+      create_env_file(
+          endpoint_url: s3_endpoint_url,
+          region: s3_bucket_region,
+          bucket_path: s3_bucket_path,
+          object_path: s3_env_file_object_path)
+
+      execute_docker_entrypoint(
+          started_indicator: "Listening")
+    end
+
+    after(:all, &:reset_docker_backend)
+
+    it 'runs alertmanager' do
+      expect(process('/opt/alertmanager/bin/alertmanager')).to(be_running)
+    end
+
+    it 'uses the default configuration' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--config\.file=\/opt\/alertmanager\/conf\/alertmanager.yml/))
+    end
+
+    it 'logs using JSON' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--log\.format=json/))
+    end
+
+    it 'logs at info level' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--log\.level=info/))
+    end
+
+    it 'runs with the alertmgr user' do
+      expect(process('/opt/alertmanager/bin/alertmanager').user)
+          .to(eq('alertmgr'))
+    end
+
+    it 'runs with the alertmgr group' do
+      expect(process('/opt/alertmanager/bin/alertmanager').group)
+          .to(eq('alertmgr'))
+    end
+  end
+
   def reset_docker_backend
     Specinfra::Backend::Docker.instance.send :cleanup_container
     Specinfra::Backend::Docker.clear

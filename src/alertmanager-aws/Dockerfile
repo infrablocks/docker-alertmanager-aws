@@ -2,6 +2,15 @@ FROM infrablocks/alpine-aws-s3-config:0.20.0
 
 ENV ALERTMANAGER_VERSION 0.21.0
 
+RUN apk \
+    --verbose \
+    --no-cache \
+    add \
+        su-exec
+
+RUN addgroup -S alertmgr && \
+    adduser -S -G alertmgr alertmgr
+
 RUN cd /tmp \
     && curl \
         -L "https://github.com/prometheus/alertmanager/releases/download/v${ALERTMANAGER_VERSION}/alertmanager-${ALERTMANAGER_VERSION}.linux-amd64.tar.gz" \
@@ -23,6 +32,13 @@ COPY scripts/fetch-configuration.sh /opt/alertmanager/scripts/fetch-configuratio
 
 RUN chmod +x /opt/alertmanager/bin/start.sh
 RUN chmod +x /opt/alertmanager/scripts/fetch-configuration.sh
+
+RUN mkdir -p /var/opt/alertmanager \
+    && chown -R alertmgr:alertmgr \
+        /opt/alertmanager \
+        /var/opt/alertmanager
+
+EXPOSE 9093 9094
 
 ENV STARTUP_SCRIPT_PATH=/opt/alertmanager/bin/start.sh
 ENV FETCH_SECRETS_FILES_SCRIPT_PATH=/opt/alertmanager/scripts/fetch-configuration.sh
