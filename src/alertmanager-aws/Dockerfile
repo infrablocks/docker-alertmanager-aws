@@ -10,6 +10,10 @@ RUN cd /tmp \
     && mkdir -p /opt/alertmanager \
     && cp -R "alertmanager-${ALERTMANAGER_VERSION}.linux-amd64"/* /opt/alertmanager \
     && mkdir -p /opt/alertmanager/bin \
+    && mkdir -p /opt/alertmanager/conf \
+    && mv /opt/alertmanager/alertmanager /opt/alertmanager/bin/alertmanager \
+    && mv /opt/alertmanager/amtool /opt/alertmanager/bin/amtool \
+    && mv /opt/alertmanager/alertmanager.yml /opt/alertmanager/conf/alertmanager.yml \
     && rm "alertmanager-${ALERTMANAGER_VERSION}.linux-amd64.tar.gz" \
     && rm -rf "alertmanager-${ALERTMANAGER_VERSION}.linux-amd64" \
     && cd /
