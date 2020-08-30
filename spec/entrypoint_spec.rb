@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'prometheus' do
+describe 'entrypoint' do
   metadata_service_url = 'http://metadata:1338'
   s3_endpoint_url = 'http://s3:4566'
   s3_bucket_region = 'us-east-1'
@@ -85,7 +85,52 @@ describe 'prometheus' do
 
     it 'has no cluster peers' do
       expect(process('/opt/alertmanager/bin/alertmanager').args)
-          .not_to(match(/--cluster\.peer/))
+          .not_to(match(/--cluster\.peer=/))
+    end
+
+    it 'uses a cluster peer timeout of 15s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.peer-timeout=15s/))
+    end
+
+    it 'uses a cluster gossip interval of 200ms' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.gossip-interval=200ms/))
+    end
+
+    it 'uses a cluster pushpull interval of 1m0s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.pushpull-interval=1m0s/))
+    end
+
+    it 'uses a cluster TCP timeout of 10s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.tcp-timeout=10s/))
+    end
+
+    it 'uses a cluster probe timeout of 500ms' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.probe-timeout=500ms/))
+    end
+
+    it 'uses a cluster probe interval of 1s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.probe-interval=1s/))
+    end
+
+    it 'uses a cluster settle timeout of 1m0s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.settle-timeout=1m0s/))
+    end
+
+    it 'uses a cluster reconnect interval of 10s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.reconnect-interval=10s/))
+    end
+
+    it 'uses a cluster reconnect timeout of 6h0m0s' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.reconnect-timeout=6h0m0s/))
     end
 
     it 'runs with the alertmgr user' do
@@ -110,7 +155,16 @@ describe 'prometheus' do
               'ALERTMANAGER_CLUSTER_LISTEN_ADDRESS' => '0.0.0.0:9095',
               'ALERTMANAGER_CLUSTER_ADVERTISE_ADDRESS' => '10.0.0.1:9095',
               'ALERTMANAGER_CLUSTER_PEERS' =>
-                  'am1.example.com:9095,am2.example.com:9095'
+                  'am1.example.com:9095,am2.example.com:9095',
+              'ALERTMANAGER_CLUSTER_PEER_TIMEOUT' => '30s',
+              'ALERTMANAGER_CLUSTER_GOSSIP_INTERVAL' => '100ms',
+              'ALERTMANAGER_CLUSTER_PUSHPULL_INTERVAL' => '1m30s',
+              'ALERTMANAGER_CLUSTER_TCP_TIMEOUT' => '20s',
+              'ALERTMANAGER_CLUSTER_PROBE_TIMEOUT' => '800ms',
+              'ALERTMANAGER_CLUSTER_PROBE_INTERVAL' => '2s',
+              'ALERTMANAGER_CLUSTER_SETTLE_TIMEOUT' => '2m0s',
+              'ALERTMANAGER_CLUSTER_RECONNECT_INTERVAL' => '15s',
+              'ALERTMANAGER_CLUSTER_RECONNECT_TIMEOUT' => '5h0m0s',
           })
 
       execute_docker_entrypoint(
@@ -134,6 +188,51 @@ describe 'prometheus' do
           .to(match(/--cluster\.peer=am1.example.com/))
       expect(process('/opt/alertmanager/bin/alertmanager').args)
           .to(match(/--cluster\.peer=am2.example.com/))
+    end
+
+    it 'uses the provided cluster peer timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.peer-timeout=30s/))
+    end
+
+    it 'uses the provided cluster gossip interval' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.gossip-interval=100ms/))
+    end
+
+    it 'uses the provided pushpull gossip interval' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.pushpull-interval=1m30s/))
+    end
+
+    it 'uses the provided cluster TCP timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.tcp-timeout=20s/))
+    end
+
+    it 'uses the provided cluster probe timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.probe-timeout=800ms/))
+    end
+
+    it 'uses the provided cluster probe interval' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.probe-interval=2s/))
+    end
+
+    it 'uses the provided cluster settle timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.settle-timeout=2m0s/))
+    end
+
+    it 'uses the provided cluster reconnect interval' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.reconnect-interval=15s/))
+    end
+
+    it 'uses the provided cluster reconnect timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--cluster\.reconnect-timeout=5h0m0s/))
     end
   end
 
