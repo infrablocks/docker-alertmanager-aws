@@ -53,19 +53,39 @@ describe 'entrypoint' do
           .to(match(/--config\.file=\/opt\/alertmanager\/conf\/alertmanager.yml/))
     end
 
-    it 'logs using JSON' do
+    it 'uses a storage path of /var/opt/alertmanager' do
       expect(process('/opt/alertmanager/bin/alertmanager').args)
-          .to(match(/--log\.format=json/))
+          .to(match(/--storage\.path=\/var\/opt\/alertmanager/))
     end
 
-    it 'logs at info level' do
+    it 'uses a data retention of 120h' do
       expect(process('/opt/alertmanager/bin/alertmanager').args)
-          .to(match(/--log\.level=info/))
+          .to(match(/--data\.retention=120h/))
+    end
+
+    it 'uses an alerts GC interval of 30m' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--alerts\.gc-interval=30m/))
     end
 
     it 'has no external URL' do
       expect(process('/opt/alertmanager/bin/alertmanager').args)
           .not_to(match(/--web\.external-address/))
+    end
+
+    it 'has no web route prefix' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .not_to(match(/--web\.route-prefix/))
+    end
+
+    it 'has no web get concurrency' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .not_to(match(/--web\.get-concurrency/))
+    end
+
+    it 'has no web timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .not_to(match(/--web\.timeout/))
     end
 
     it 'listens on port 9093 on all interfaces' do
@@ -133,6 +153,16 @@ describe 'entrypoint' do
           .to(match(/--cluster\.reconnect-timeout=6h0m0s/))
     end
 
+    it 'logs using JSON' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--log\.format=json/))
+    end
+
+    it 'logs at info level' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--log\.level=info/))
+    end
+
     it 'runs with the alertmgr user' do
       expect(process('/opt/alertmanager/bin/alertmanager').user)
           .to(eq('alertmgr'))
@@ -141,6 +171,107 @@ describe 'entrypoint' do
     it 'runs with the alertmgr group' do
       expect(process('/opt/alertmanager/bin/alertmanager').group)
           .to(eq('alertmgr'))
+    end
+  end
+
+  describe 'with storage configuration' do
+    before(:all) do
+      create_env_file(
+          endpoint_url: s3_endpoint_url,
+          region: s3_bucket_region,
+          bucket_path: s3_bucket_path,
+          object_path: s3_env_file_object_path,
+          env: {
+              'ALERTMANAGER_STORAGE_PATH' => '/data',
+              'ALERTMANAGER_DATA_RETENTION' => '168h'
+          })
+
+      execute_command('mkdir /data')
+
+      execute_docker_entrypoint(
+          started_indicator: "Listening")
+    end
+
+    after(:all, &:reset_docker_backend)
+
+    it 'uses the provided storage path' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--storage\.path=\/data/))
+    end
+
+    it 'uses the provided data retention' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--data\.retention=168h/))
+    end
+  end
+
+  describe 'with alert configuration' do
+    before(:all) do
+      create_env_file(
+          endpoint_url: s3_endpoint_url,
+          region: s3_bucket_region,
+          bucket_path: s3_bucket_path,
+          object_path: s3_env_file_object_path,
+          env: {
+              'ALERTMANAGER_ALERTS_GC_INTERVAL' => '45m',
+          })
+
+      execute_docker_entrypoint(
+          started_indicator: "Listening")
+    end
+
+    after(:all, &:reset_docker_backend)
+
+    it 'uses the provided alerts GC interval' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--alerts\.gc-interval=45m/))
+    end
+  end
+
+  describe 'with web configuration' do
+    before(:all) do
+      create_env_file(
+          endpoint_url: s3_endpoint_url,
+          region: s3_bucket_region,
+          bucket_path: s3_bucket_path,
+          object_path: s3_env_file_object_path,
+          env: {
+              'ALERTMANAGER_WEB_EXTERNAL_URL' => 'https://am1.example.com',
+              'ALERTMANAGER_WEB_ROUTE_PREFIX' => '/api',
+              'ALERTMANAGER_WEB_LISTEN_ADDRESS' => ':9000',
+              'ALERTMANAGER_WEB_GET_CONCURRENCY' => '4',
+              'ALERTMANAGER_WEB_TIMEOUT' => '10s',
+          })
+
+      execute_docker_entrypoint(
+          started_indicator: "Listening")
+    end
+
+    after(:all, &:reset_docker_backend)
+
+    it 'uses the provided web external URL' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--web\.external-url=https:\/\/am1.example.com/))
+    end
+
+    it 'uses the provided web route prefix' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--web\.route-prefix=\/api/))
+    end
+
+    it 'uses the provided web listen address' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--web\.listen-address=:9000/))
+    end
+
+    it 'uses the provided web get concurrency' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--web\.get-concurrency=4/))
+    end
+
+    it 'uses the provided web timeout' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--web\.timeout=10s/))
     end
   end
 
@@ -233,6 +364,95 @@ describe 'entrypoint' do
     it 'uses the provided cluster reconnect timeout' do
       expect(process('/opt/alertmanager/bin/alertmanager').args)
           .to(match(/--cluster\.reconnect-timeout=5h0m0s/))
+    end
+  end
+
+  describe 'with logging configuration' do
+    before(:all) do
+      create_env_file(
+          endpoint_url: s3_endpoint_url,
+          region: s3_bucket_region,
+          bucket_path: s3_bucket_path,
+          object_path: s3_env_file_object_path,
+          env: {
+              'ALERTMANAGER_LOG_LEVEL' => 'debug',
+              'ALERTMANAGER_LOG_FORMAT' => 'logfmt'
+          })
+
+      execute_docker_entrypoint(
+          started_indicator: "Listening")
+    end
+
+    after(:all, &:reset_docker_backend)
+
+    it 'logs using the provided format' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--log\.format=logfmt/))
+    end
+
+    it 'logs at the provided level' do
+      expect(process('/opt/alertmanager/bin/alertmanager').args)
+          .to(match(/--log\.level=debug/))
+    end
+  end
+
+  describe 'configuration' do
+    describe 'without configuration object path provided' do
+      before(:all) do
+        create_env_file(
+            endpoint_url: s3_endpoint_url,
+            region: s3_bucket_region,
+            bucket_path: s3_bucket_path,
+            object_path: s3_env_file_object_path)
+
+        execute_docker_entrypoint(
+            started_indicator: "Listening")
+      end
+
+      after(:all, &:reset_docker_backend)
+
+      it 'uses the default configuration' do
+        alertmanager_config =
+            file('/opt/alertmanager/conf/alertmanager.yml').content
+
+        expect(alertmanager_config)
+            .to(eq(File.read('spec/fixtures/default-alertmanager-config.yml')))
+      end
+    end
+
+    describe 'with configuration object path provided' do
+      before(:all) do
+        configuration_file_object_path = "#{s3_bucket_path}/alertmanager.yml"
+
+        create_object(
+            endpoint_url: s3_endpoint_url,
+            region: s3_bucket_region,
+            bucket_path: s3_bucket_path,
+            object_path: configuration_file_object_path,
+            content: File.read('spec/fixtures/custom-alertmanager-config.yml'))
+        create_env_file(
+            endpoint_url: s3_endpoint_url,
+            region: s3_bucket_region,
+            bucket_path: s3_bucket_path,
+            object_path: s3_env_file_object_path,
+            env: {
+                "ALERTMANAGER_CONFIGURATION_FILE_OBJECT_PATH" =>
+                    configuration_file_object_path
+            })
+
+        execute_docker_entrypoint(
+            started_indicator: "Listening")
+      end
+
+      after(:all, &:reset_docker_backend)
+
+      it 'uses the provided configuration' do
+        alertmanager_config =
+            file('/opt/alertmanager/conf/alertmanager.yml').content
+
+        expect(alertmanager_config)
+            .to(eq(File.read('spec/fixtures/custom-alertmanager-config.yml')))
+      end
     end
   end
 

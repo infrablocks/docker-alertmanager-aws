@@ -5,11 +5,41 @@ set -e
 
 config_file=\
 "${ALERTMANAGER_CONFIG_FILE:-/opt/alertmanager/conf/alertmanager.yml}"
+
 storage_path=\
 "${ALERTMANAGER_STORAGE_PATH:-/var/opt/alertmanager}"
+data_retention=\
+"${ALERTMANAGER_DATA_RETENTION:-120h}"
+
+alerts_gc_interval=\
+"${ALERTMANAGER_ALERTS_GC_INTERVAL:-30m}"
+
+web_external_url_option=
+if [ -n "${ALERTMANAGER_WEB_EXTERNAL_URL}" ]; then
+  external_url="${ALERTMANAGER_WEB_EXTERNAL_URL}"
+  web_external_url_option="--web.external-url=${external_url}"
+fi
+
+web_route_prefix_option=
+if [ -n "${ALERTMANAGER_WEB_ROUTE_PREFIX}" ]; then
+  route_prefix="${ALERTMANAGER_WEB_ROUTE_PREFIX}"
+  web_route_prefix_option="--web.route-prefix=${route_prefix}"
+fi
 
 web_listen_address=\
 "${ALERTMANAGER_WEB_LISTEN_ADDRESS:-:9093}"
+
+web_get_concurrency_option=
+if [ -n "${ALERTMANAGER_WEB_GET_CONCURRENCY}" ]; then
+  get_concurrency="${ALERTMANAGER_WEB_GET_CONCURRENCY}"
+  web_get_concurrency_option="--web.get-concurrency=${get_concurrency}"
+fi
+
+web_timeout_option=
+if [ -n "${ALERTMANAGER_WEB_TIMEOUT}" ]; then
+  timeout="${ALERTMANAGER_WEB_TIMEOUT}"
+  web_timeout_option="--web.timeout=${timeout}"
+fi
 
 cluster_listen_address=\
 "${ALERTMANAGER_CLUSTER_LISTEN_ADDRESS:-0.0.0.0:9094}"
@@ -44,8 +74,15 @@ exec su-exec alertmgr:alertmgr /opt/alertmanager/bin/alertmanager \
     --config.file="${config_file}" \
     \
     --storage.path="${storage_path}" \
+    --data.retention="${data_retention}" \
+    \
+    --alerts.gc-interval="${alerts_gc_interval}" \
     \
     --web.listen-address="${web_listen_address}" \
+    ${web_external_url_option} \
+    ${web_route_prefix_option} \
+    ${web_get_concurrency_option} \
+    ${web_timeout_option} \
     \
     --cluster.listen-address="${cluster_listen_address}" \
     --cluster.peer-timeout="${cluster_peer_timeout}" \
