@@ -2,7 +2,9 @@ require 'rake_docker'
 require 'rake_circle_ci'
 require 'rake_github'
 require 'rake_ssh'
+require 'rake_gpg'
 require 'rake_terraform'
+require 'securerandom'
 require 'yaml'
 require 'git'
 require 'os'
@@ -32,11 +34,32 @@ end
 
 task :default => :'test:integration'
 
-RakeSSH.define_key_tasks(
-    namespace: :deploy_key,
-    path: 'config/secrets/ci/',
-    comment: 'maintainers@infrablocks.io'
-)
+namespace :encryption do
+  namespace :passphrase do
+    task :generate do
+      File.open('config/secrets/ci/encryption.passphrase', 'w') do |f|
+        f.write(SecureRandom.base64(36))
+      end
+    end
+  end
+end
+
+namespace :keys do
+  namespace :deploy do
+    RakeSSH.define_key_tasks(
+        path: 'config/secrets/ci/',
+        comment: 'maintainers@infrablocks.io')
+  end
+
+  namespace :gpg do
+    RakeGPG.define_generate_key_task(
+        output_directory: 'config/secrets/ci',
+        name_prefix: 'gpg',
+        owner_name: 'InfraBlocks Maintainers',
+        owner_email: 'maintainers@infrablocks.io',
+        owner_comment: 'docker-alertmanager-aws CI Key')
+  end
+end
 
 RakeCircleCI.define_project_tasks(
     namespace: :circle_ci,
