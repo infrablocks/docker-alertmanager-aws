@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe 'image' do
   image = 'alertmanager-aws:latest'
   extra = {
-      'Entrypoint' => '/bin/sh',
+    'Entrypoint' => '/bin/sh'
   }
 
   before(:all) do
@@ -16,16 +18,22 @@ describe 'image' do
 
   it 'puts the alertmgr user in the alertmgr group' do
     expect(user('alertmgr'))
-        .to(belong_to_primary_group('alertmgr'))
+      .to(belong_to_primary_group('alertmgr'))
   end
 
-  it 'has the correct ownership on the alertmanager directory' do
+  it 'has the correct owner on the alertmanager directory' do
     expect(file('/opt/alertmanager')).to(be_owned_by('alertmgr'))
+  end
+
+  it 'has the correct group on the alertmanager directory' do
     expect(file('/opt/alertmanager')).to(be_grouped_into('alertmgr'))
   end
 
-  it 'has the correct ownership on the alertmanager data directory' do
+  it 'has the correct owner on the alertmanager data directory' do
     expect(file('/var/opt/alertmanager')).to(be_owned_by('alertmgr'))
+  end
+
+  it 'has the correct group on the alertmanager data directory' do
     expect(file('/var/opt/alertmanager')).to(be_grouped_into('alertmgr'))
   end
 
