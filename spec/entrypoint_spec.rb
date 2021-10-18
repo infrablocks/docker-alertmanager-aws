@@ -507,23 +507,23 @@ describe 'entrypoint' do
 
   def make_bucket(opts)
     execute_command('aws ' \
-        "--endpoint-url #{opts[:endpoint_url]} " \
-        's3 ' \
-        'mb ' \
-        "#{opts[:bucket_path]} " \
-        "--region \"#{opts[:region]}\"")
+                    "--endpoint-url #{opts[:endpoint_url]} " \
+                    's3 ' \
+                    'mb ' \
+                    "#{opts[:bucket_path]} " \
+                    "--region \"#{opts[:region]}\"")
   end
 
   def copy_content(opts)
     execute_command("echo -n #{Shellwords.escape(opts[:content])} | " \
-        'aws ' \
-        "--endpoint-url #{opts[:endpoint_url]} " \
-        's3 ' \
-        'cp ' \
-        '- ' \
-        "#{opts[:object_path]} " \
-        "--region \"#{opts[:region]}\" " \
-        '--sse AES256')
+                    'aws ' \
+                    "--endpoint-url #{opts[:endpoint_url]} " \
+                    's3 ' \
+                    'cp ' \
+                    '- ' \
+                    "#{opts[:object_path]} " \
+                    "--region \"#{opts[:region]}\" " \
+                    '--sse AES256')
   end
 
   def execute_docker_entrypoint(opts)
