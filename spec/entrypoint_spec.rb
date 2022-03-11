@@ -541,7 +541,7 @@ describe 'entrypoint' do
   end
 
   def wait_for_started_indicator_to_be_present(logfile_path, started_indicator)
-    Octopoller.poll(timeout: 5) do
+    Octopoller.poll(timeout: 10) do
       should_re_poll?(logfile_path, started_indicator)
     end
   rescue Octopoller::TimeoutError => e
