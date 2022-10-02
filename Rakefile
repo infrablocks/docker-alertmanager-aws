@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require 'rake_docker'
-require 'rake_circle_ci'
-require 'rake_github'
-require 'rake_ssh'
-require 'rake_gpg'
-require 'rake_terraform'
-require 'securerandom'
-require 'yaml'
 require 'git'
 require 'os'
 require 'pathname'
-require 'semantic'
+require 'rake_circle_ci'
+require 'rake_docker'
+require 'rake_github'
+require 'rake_gpg'
+require 'rake_ssh'
+require 'rake_terraform'
 require 'rspec/core/rake_task'
 require 'rubocop/rake_task'
+require 'securerandom'
+require 'semantic'
+require 'yaml'
 
 require_relative 'lib/version'
 
@@ -127,10 +127,10 @@ namespace :image do
   ) do |t|
     t.work_directory = 'build/images'
 
-    t.copy_spec = [
-      'src/alertmanager-aws/Dockerfile',
-      'src/alertmanager-aws/start.sh',
-      'src/alertmanager-aws/scripts'
+    t.copy_spec = %w[
+      src/alertmanager-aws/Dockerfile
+      src/alertmanager-aws/start.sh
+      src/alertmanager-aws/scripts
     ]
 
     t.repository_name = 'alertmanager-aws'
@@ -191,7 +191,7 @@ namespace :test do
     task check: [:rubocop]
 
     desc 'Attempt to automatically fix issues with the test code'
-    task fix: [:'rubocop:auto_correct']
+    task fix: [:'rubocop:autocorrect_all']
   end
 
   RSpec::Core::RakeTask.new(
