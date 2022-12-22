@@ -1,6 +1,6 @@
-FROM infrablocks/alpine-aws-s3-config:0.22.0
+FROM infrablocks/alpine-aws-s3-config:0.23.0
 
-ENV ALERTMANAGER_VERSION 0.21.0
+ENV ALERTMANAGER_VERSION 0.24.0
 
 RUN apk \
     --verbose \

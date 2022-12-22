@@ -18,7 +18,7 @@ describe 'commands' do
 
   it 'includes the alertmanager command' do
     expect(command('/opt/alertmanager/bin/alertmanager --version').stderr)
-      .to(match(/0.21.0/))
+      .to(match(/0.24.0/))
   end
 
   def reset_docker_backend
