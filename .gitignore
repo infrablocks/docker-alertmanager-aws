@@ -12,6 +12,7 @@
 vendor/
 build/
 dist/
+.direnv
 
 # OS
 .DS_Store
@@ -23,6 +24,7 @@ run/logs/
 .tmp
 .rakeTasks
 .rspec_status
+.bundle
 
 # Terraform
 .terraform
