@@ -19,7 +19,7 @@ describe 'entrypoint' do
   }
   image = 'alertmanager-aws:latest'
   extra = {
-    'Entrypoint' => '/bin/sh',
+    'Entrypoint' => ['/bin/sh'],
     'HostConfig' => {
       'NetworkMode' => 'docker_alertmanager_aws_test_default'
     }
